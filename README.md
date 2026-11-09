@@ -87,8 +87,8 @@ The Streamlit app applies the same saved encoders and scaler to form input befor
 
 ```text
 .
-├── app.py                    # Streamlit customer churn prediction interface
-├── streamlitApp.py           # Additional Streamlit app file, if used
+├── app.py                    # Streamlit customer churn prediction interface (main app)
+├── streamlitApp.py           # Earlier copy of the app (same UI, without TensorFlow log silencing)
 ├── Churn_Modelling.csv       # Customer churn dataset
 ├── experiments.ipynb         # Data preparation, ANN training, and model saving
 ├── prediction.ipynb          # Example of loading artifacts and making a prediction
@@ -109,19 +109,29 @@ The trained model and pickle files are already included. You do not need to retr
 
 ### 1. Set up Python
 
-Use a Python version supported by the TensorFlow release installed in your environment. Then create and activate a virtual environment.
+The project has been tested with **Python 3.11**. Use a Python version supported by TensorFlow; very new Python releases may not have TensorFlow builds yet. Create and activate a virtual environment with that version.
 
 **Windows PowerShell**
 
 ```powershell
-py -m venv .venv
+py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
+
+If several Python versions are installed, `py -m venv` without `-3.11` may pick the newest one, and TensorFlow may fail to install.
+
+If PowerShell blocks the activation script, allow local scripts once:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Or skip activation and call the environment's Python directly: `.\.venv\Scripts\python.exe -m streamlit run app.py`.
 
 **macOS / Linux**
 
 ```bash
-python3 -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
 ```
 
@@ -146,6 +156,13 @@ If port 8501 is already in use, choose another port:
 python -m streamlit run app.py --server.port 8502
 ```
 
+Press `Ctrl+C` in the terminal to stop the app.
+
+### Terminal messages you can ignore
+
+- `Help agents write better Streamlit apps? ...` is a tip printed by Streamlit, not an error.
+- `app.py` hides TensorFlow's startup logs by setting `TF_CPP_MIN_LOG_LEVEL=2` and `TF_ENABLE_ONEDNN_OPTS=0` before TensorFlow is imported. Turning off oneDNN can cause tiny floating-point rounding differences, which don't meaningfully change predictions.
+
 ## Retrain the model
 
 To reproduce the training workflow, install the dependencies, open `experiments.ipynb` in Jupyter, and run its cells in order. The notebook expects `Churn_Modelling.csv` in the working directory and writes `model.h5`, `label_encoder_gender.pkl`, `onehot_encoder_geo.pkl`, and `scaler.pkl` there. Keep those generated files together with `app.py` for inference.
@@ -153,6 +170,7 @@ To reproduce the training workflow, install the dependencies, open `experiments.
 ## Requirements and notes
 
 - `scikit-learn==1.8.0` is pinned in `requirements.txt` to match the version recorded by the supplied serialized preprocessing objects.
+- Tested with Python 3.11.9, TensorFlow 2.21.0, scikit-learn 1.8.0 and Streamlit 1.67.0. Only scikit-learn is pinned, so a future TensorFlow/Keras release could affect loading `model.h5`; if that happens, install the versions listed here.
 - The app expects the model and all three `.pkl` files beside `app.py`.
 - The app runs inference locally; customer values entered in the form are passed to the loaded model by the app.
 - The displayed probability and risk band reflect the trained model's output and thresholds. They should be evaluated against appropriate business data before being used for operational decisions.
